@@ -1,2 +1,2 @@
 # ES-PTAM
-Event Stereo Parallel Tracking And Mapping
+Deep Event Stereo Parallel Tracking And Mapping
