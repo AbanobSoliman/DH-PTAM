@@ -1,2 +1,2 @@
 # DH-SLAM
-Deep Hybrid Stereo Parallel Localization And Mapping
+Deep Hybrid Simultaneous Localization And Mapping
