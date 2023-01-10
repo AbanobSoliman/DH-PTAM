@@ -1,2 +1,3 @@
 # DH-SLAM
-Deep Hybrid Simultaneous Localization And Mapping
+A Deep Hybrid Simultaneous Localization And Mapping System
+ 
