@@ -1,2 +1,2 @@
-# DES-PTAM
-Deep Event Stereo Parallel Tracking And Mapping
+# DH-SLAM
+Deep Hybrid Stereo Parallel Localization And Mapping
