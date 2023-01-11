@@ -1,3 +1,3 @@
-# DH-SLAM
-A Deep Hybrid Simultaneous Localization And Mapping System
+# DH-PTAM
+A Deep Hybrid Stereo Event-Visual Parallel Tracking And Mapping System
  
