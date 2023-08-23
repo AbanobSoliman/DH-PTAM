@@ -22,3 +22,8 @@ This python research project is the complete implementation of DH-PTAM.
 ## Results
 The trajectories of all experiments reported in the paper are given in:   
 * /DH_PTAM/results/save/
+
+## Credits
+The backend of this project is based on:
+* PySLAM: https://github.com/luigifreda/pyslam
+* S-PTAM: https://github.com/uoip/stereo_ptam
