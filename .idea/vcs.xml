@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/features/LoFTR" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/features/SuperGluePretrainedNetwork" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/features/r2d2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/thirdparty/DSEC" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/thirdparty/DSEC/ip_basic" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/thirdparty/HOTS" vcs="Git" />
+  </component>
+</project>
