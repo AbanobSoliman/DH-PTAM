@@ -1,6 +1,8 @@
 # DH-PTAM
 
-This python research project is the authors complete implementation of DH-PTAM.  
+This python research project is the complete implementation of DH-PTAM.  
+
+[![DG-PTAM Insights Video](results/dhptam_vid.png)](https://youtu.be/chAC-vQH9KU)
 
 ## Requirements
 * Python 3.6+
