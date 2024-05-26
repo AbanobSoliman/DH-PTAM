@@ -1,3 +1,5 @@
+import numpy as np
+
 from backend import *
 sys.path.insert(0, './thirdparty/DSEC/scripts/')
 sys.path.insert(0, './thirdparty/DSEC/ip_basic/ip_basic')
@@ -12,21 +14,141 @@ def load_images_from_folder(folder):
 def Dataset_loading():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset_type", default="tum")  # tum or vector
+    parser.add_argument("--dataset_type", default="mvsec")  # tum or vector or mvsec
     parser.add_argument("--dataset_name",
-                        default="mocap-desk2")  # mocap-desk2   ,   mocap-6dof   ,   bike-easy   ,   floor2-dark , corner_slow1,  school_scooter1, corridors_walk1
+                        default="indoor_flying3")  # indoor_flying1, indoor_flying2, indoor_flying3, indoor_flying4, mocap-desk2   ,   mocap-6dof   ,   bike-easy   ,   floor2-dark , corner_slow1,  school_scooter1, corridors_walk1
     parser.add_argument("--scale", default=0, type=int)  # Motion: 1: Large    0: small
-    parser.add_argument("--skip", default=1, type=int)  # Skip the first X frames (45 for TUM-VIE, 1 for VECtor)
-    parser.add_argument("--visualize", default=True, type=bool)
+    parser.add_argument("--skip", default=600, type=int)  # Skip the first X frames (45 for TUM-VIE, 1 for VECtor)
+    parser.add_argument("--visualize", default=False, type=bool)
     parser.add_argument("--beta_lim", default=0.3, type=float)  # The contribution of events on the standard camera frame
     parser.add_argument("--dataset_path", default="/media/abanob/My Passport/Dense_mapping/3Ms")
-    parser.add_argument("--feature", default="SP")  # R2D2 or SP (SuperPoint)
+    parser.add_argument("--feature", default="R2D2")  # R2D2 or SP (SuperPoint)
     args = parser.parse_args()
 
     dataset_type = args.dataset_type
     dataset_name = args.dataset_name
     scale = args.scale
     dataset_path = args.dataset_path
+
+    if dataset_type == 'mvsec':
+
+        parser.add_argument("--cam0", help="left DAVIS sensor grayscale frames",
+                            default="%s/MVSEC/%s_data.hdf5" % (dataset_path,
+                                dataset_name))
+        parser.add_argument("--cam1", help="right DAVIS sensor grayscale frames",
+                            default="%s/MVSEC/%s_data.hdf5" % (dataset_path,
+                                dataset_name))
+        parser.add_argument("--cam0ts", help="left DAVIS sensor grayscale frames timestamps us",
+                            default="%s/MVSEC/%s_data.hdf5" % (dataset_path,
+                                dataset_name))
+        parser.add_argument("--cam1ts", help="right DAVIS sensor grayscale frames timestamps us",
+                            default="%s/MVSEC/%s_data.hdf5" % (dataset_path,
+                                dataset_name))
+        parser.add_argument("--cam0exp", help="left DAVIS sensor grayscale frames exposure us",
+                            default="%s/MVSEC/%s_data.hdf5" % (dataset_path,
+                                dataset_name))
+        parser.add_argument("--cam1exp", help="right DAVIS sensor grayscale frames exposure us",
+                            default="%s/MVSEC/%s_data.hdf5" % (dataset_path,
+                                dataset_name))
+        parser.add_argument("--event_file1", help="Events in 'events' are of type (x, y, t, p)"
+                                                  "ms_to_idx is same as in DSEC file format, which allows accessing event chunks using time index",
+                            default="%s/MVSEC/%s_data.hdf5" % (dataset_path,
+                                dataset_name))
+        parser.add_argument("--event_file2", help="Events in 'events' are of type (x, y, t, p)"
+                                                  "ms_to_idx is same as in DSEC file format, which allows accessing event chunks using time index",
+                            default="%s/MVSEC/%s_data.hdf5" % (dataset_path,
+                                dataset_name))
+        parser.add_argument("--gt_poses", help="Events in 'events' are of type (x, y, t, p)"
+                                               "ms_to_idx is same as in DSEC file format, which allows accessing event chunks using time index",
+                            default="%s/MVSEC/%s_gt.hdf5" % (dataset_path,
+                                dataset_name))
+        args = parser.parse_args()
+
+        data_all = h5py.File(Path(args.event_file1))
+        gt_poses = h5py.File(Path(args.gt_poses))
+
+        cam0_times = data_all['davis']['left']['image_raw_ts']
+        cam1_times = data_all['davis']['right']['image_raw_ts']
+        cam0_images = data_all['davis']['left']['image_raw']
+        cam1_images = data_all['davis']['right']['image_raw']
+        h, w = 260, 346  # MVSEC DVS 346, 260
+        h_c, w_c = 260, 346  # MVSEC APS 346, 260
+
+        freq_cam = 1 / np.mean(abs(cam0_times[:-1] - cam0_times[1:]) * 1e-6)
+        dt_ms = 1000 / freq_cam  # in msec (Events Accumulation Time calculated to correspond to Global Shutter frames)
+        delta = 30  # Time Surface Exponential Decay dT (30 msec is good)
+
+        # DVS stereo rectification
+        kcam_L = np.array([[199.6530123165822, 0.0, 177.43276376280926], [0.0, 199.6530123165822, 126.81215684365904], [0.0, 0.0, 1.0]])
+        pcam_l = np.array([-0.048031442223833355, 0.011330957517194437, -0.055378166304281135, 0.021500973881459395])
+        kcam_R = np.array([[199.6530123165822, 0.0, 177.43276376280926], [0.0, 199.6530123165822, 126.81215684365904], [0.0, 0.0, 1.0]])
+        pcam_R = np.array([-0.04846669832871334, 0.010092844338123635, -0.04293073765014637, 0.005194706897326005])
+
+        T_RL = np.array([[0.9999285439274112, 0.011088072985503046, -0.004467849222081981, -0.09988137641750752],
+                         [-0.011042817783611191, 0.9998887260774646, 0.01002953830336461, -0.0003927067773089277],
+                         [0.004578560319692358, -0.009979483987103495, 0.9999397215256256, 1.8880107752680777e-06],
+                         [0.0, 0.0, 0.0, 1.0]])
+        R = T_RL[:3, :3]
+        T = T_RL[:3, -1]
+        Te = T
+        R1, R2, P1, P2, Q, validRoi1, validRoi2 = cv2.stereoRectify(kcam_L, pcam_l, kcam_R, pcam_R, (w, h), R, T)
+        xmap1, ymap1 = cv2.initUndistortRectifyMap(kcam_L, pcam_l, R1, kcam_L, (w, h), cv2.CV_32FC1)
+        xmap2, ymap2 = cv2.initUndistortRectifyMap(kcam_R, pcam_R, R2, kcam_R, (w, h), cv2.CV_32FC1)
+        Ke_L_inv = np.linalg.inv(kcam_L)
+        Ke_L = kcam_L
+        Ke_R_inv = np.linalg.inv(kcam_R)
+
+        # APS stereo rectification
+        kcam_L = np.array([[199.6530123165822, 0.0, 177.43276376280926], [0.0, 199.6530123165822, 126.81215684365904],
+                           [0.0, 0.0, 1.0]])
+        pcam_l = np.array([-0.048031442223833355, 0.011330957517194437, -0.055378166304281135, 0.021500973881459395])
+        kcam_R = np.array([[199.6530123165822, 0.0, 177.43276376280926], [0.0, 199.6530123165822, 126.81215684365904],
+                           [0.0, 0.0, 1.0]])
+        pcam_R = np.array([-0.04846669832871334, 0.010092844338123635, -0.04293073765014637, 0.005194706897326005])
+
+        T_RL = np.array([[0.9999285439274112, 0.011088072985503046, -0.004467849222081981, -0.09988137641750752],
+                         [-0.011042817783611191, 0.9998887260774646, 0.01002953830336461, -0.0003927067773089277],
+                         [0.004578560319692358, -0.009979483987103495, 0.9999397215256256, 1.8880107752680777e-06],
+                         [0.0, 0.0, 0.0, 1.0]])
+        R = T_RL[:3, :3]
+        T = T_RL[:3, -1]
+        Tcam = T
+        R1, R2, P1, P2, Q, validRoi1, validRoi2 = cv2.stereoRectify(kcam_L, pcam_l, kcam_R, pcam_R, (w_c, h_c), R, T)
+        xmap3, ymap3 = cv2.initUndistortRectifyMap(kcam_L, pcam_l, R1, kcam_L, (w_c, h_c), cv2.CV_32FC1)
+        xmap4, ymap4 = cv2.initUndistortRectifyMap(kcam_R, pcam_R, R2, kcam_R, (w_c, h_c), cv2.CV_32FC1)
+        Kc_L = kcam_L
+        Kc_R = kcam_R
+
+        Tce_L = np.eye(4)
+        Tce_R = np.eye(4)
+
+        params = ParamsTUMVIE(scale, args.feature)
+
+        cam = Camera(Kc_L[0, 0], Kc_L[1, 1], Kc_L[0, 2], Kc_L[1, 2], w_c, h_c, params.frustum_near, params.frustum_far,
+                     np.linalg.norm(Tcam))  # 'fx fy cx cy width height baseline'
+        dvs = Camera(Ke_L[0, 0], Ke_L[1, 1], Ke_L[0, 2], Ke_L[1, 2], w, h, params.frustum_near, params.frustum_far,
+                     np.linalg.norm(Te))
+
+        eventsL = data_all['davis']['left']['events'][:]
+        eventsL_dict = {
+            'x': eventsL[:, 0].tolist(),
+            'y': eventsL[:, 1].tolist(),
+            't': eventsL[:, 2].tolist(),
+            'p': eventsL[:, 3].tolist()
+        }
+        eventsL = eventsL_dict
+
+        eventsR = data_all['davis']['right']['events'][:]
+        eventsR_dict = {
+            'x': eventsR[:, 0].tolist(),
+            'y': eventsR[:, 1].tolist(),
+            't': eventsR[:, 2].tolist(),
+            'p': eventsR[:, 3].tolist()
+        }
+        eventsR = eventsR_dict
+
+        delta_uv_L = (0.0, 0.0)
+        delta_uv_R = (-19.941771812941038, 0.0)
 
     if dataset_type == 'tum':
 
