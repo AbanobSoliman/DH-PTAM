@@ -2,7 +2,15 @@
 
 This python research project is the complete implementation of DH-PTAM.  
 
+Insights video:
+
 [![DG-PTAM Insights Video](results/dhptam_vid.png)](https://youtu.be/chAC-vQH9KU)
+
+Our implementation inspires your research ? Are you interested to use our code !
+Thank you for citing our paper:
+
+    A. Soliman, F. Bonardi, D. Sidibé, and S. Bouchafa, "DH-PTAM: A Deep Hybrid Stereo Events-Frames Parallel Tracking And Mapping System," 
+    IEEE Transactions on Intelligent Vehicles, vol. 0, 2024, doi: 10.1109/TIV.2024.3412595.
 
 ## Requirements
 * Python 3.6+
@@ -16,7 +24,7 @@ This python research project is the complete implementation of DH-PTAM.
 `main_DH-PTAM.py`  
 * Setting parameters configuration:
 `params.py`  
-* Setting datasets configuration (Set for TUM-VIE and VECtor):
+* Setting datasets configuration (Set for MVSEC, TUM-VIE and VECtor):
 `dataset_config.py`  
 
 ## Results
