@@ -61,6 +61,37 @@ sr.readModel(path)
 sr.setModel("espcn", 4)  # set the model by passing the value and the upsampling ratio
 
 
+def slice_events_dict(events_dict, t_start, t_end):
+    """
+    Slice the events dictionary based on the given start and end time.
+
+    Parameters:
+    - events_dict (dict): The original events dictionary with keys ['x', 'y', 't', 'p'].
+    - t_start (float): Start time for the slice.
+    - t_end (float): End time for the slice.
+
+    Returns:
+    - dict: A dictionary with sliced events.
+    """
+    # Find the indices for the given time range
+    t_array = events_dict['t']
+    start_idx = next((i for i, t in enumerate(t_array) if t >= t_start), None)
+    end_idx = next((i for i, t in enumerate(t_array) if t > t_end), len(t_array)) - 1
+
+    if start_idx is None:
+        return {key: [] for key in events_dict}
+
+    # Slice the dictionary
+    sliced_dict = {
+        'x': events_dict['x'][start_idx:end_idx + 1],
+        'y': events_dict['y'][start_idx:end_idx + 1],
+        't': events_dict['t'][start_idx:end_idx + 1],
+        'p': events_dict['p'][start_idx:end_idx + 1]
+    }
+
+    return sliced_dict
+
+
 def find_nearest_idx(array, value):
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()

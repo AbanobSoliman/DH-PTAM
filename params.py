@@ -109,8 +109,17 @@ class ParamsTUMVIE(Params):
             self.feature_detector = feature_superpoint.SuperPointFeature2D()  # detect
             self.descriptor_extractor = self.feature_detector  # compute
 
+        elif config == 'R2D2-SP':
+            self.feature_detector = feature_r2d2.R2d2Feature2D(num_features=100000000, scale_f=8**0.05)  # detect
+            self.descriptor_extractor = feature_superpoint.SuperPointFeature2D()  # compute
+
+        elif config == 'ORB-R2D2':
+            self.feature_detector = cv2.ORB_create(
+                nfeatures=100000000, scaleFactor=1.7, nlevels=12, edgeThreshold=1, fastThreshold=1, patchSize=500)  # detect
+            self.descriptor_extractor = feature_r2d2.R2d2Feature2D(num_features=100000000, scale_f=10**0.05)  # compute
+
         elif config == 'R2D2':
-            self.feature_detector = feature_r2d2.R2d2Feature2D(num_features=10000, scale_f=2**0.25)  # detect
+            self.feature_detector = feature_r2d2.R2d2Feature2D(num_features=100000000, scale_f=10**0.05)  # detect
             self.descriptor_extractor = self.feature_detector  # compute
 
         else:

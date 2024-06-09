@@ -1,3 +1,5 @@
+import numpy as np
+
 from backend import *
 
 # Memory Cleaner
@@ -47,13 +49,28 @@ if __name__ == '__main__':
         # ts0 = time.time()
 
         timestamp = cam0_times[i]
-        evsL = eventsL.get_events(timestamp - dt_ms * 1e3, timestamp)
-        evsR = eventsR.get_events(cam1_times[i] - dt_ms * 1e3, cam1_times[i])
+
+        if args.dataset_type == "mvsec":
+            evsL = slice_events_dict(eventsL, timestamp - dt_ms * 1e3, timestamp)
+            evsR = slice_events_dict(eventsR, cam1_times[i] - dt_ms * 1e3, cam1_times[i])
+        else:
+            evsL = eventsL.get_events(timestamp - dt_ms * 1e3, timestamp)
+            evsR = eventsR.get_events(cam1_times[i] - dt_ms * 1e3, cam1_times[i])
+
         # Load and rectify cam0,1 images
-        aps_left = cv2.remap(cv2.imread(cam0_images[i], 0), xmap3, ymap3, cv2.INTER_CUBIC,
-                             borderValue=(255, 255, 255, 255))
-        aps_right = cv2.remap(cv2.imread(cam1_images[i], 0), xmap4, ymap4, cv2.INTER_CUBIC,
-                              borderValue=(255, 255, 255, 255))
+        if args.dataset_type == "mvsec":
+            aps_left = cv2.remap(np.array(cam0_images[i]).astype(np.uint8), xmap3, ymap3, cv2.INTER_CUBIC,
+                                 borderValue=(255, 255, 255, 255))
+            aps_right = cv2.remap(np.array(cam1_images[i]).astype(np.uint8), xmap4, ymap4, cv2.INTER_CUBIC,
+                                  borderValue=(255, 255, 255, 255))
+        else:
+            aps_left = cv2.remap(cv2.imread(cam0_images[i], 0), xmap3, ymap3, cv2.INTER_CUBIC,
+                                 borderValue=(255, 255, 255, 255))
+            aps_right = cv2.remap(cv2.imread(cam1_images[i], 0), xmap4, ymap4, cv2.INTER_CUBIC,
+                                  borderValue=(255, 255, 255, 255))
+
+        #cv2.imshow('APS Frame', cv2.resize(cv2.hconcat((aps_left.astype(np.uint8), aps_right.astype(np.uint8))), (w, int(h/2))))
+        #cv2.waitKey(5)
 
         # # Convert it to pandas DataFrame
         # evsL = pd.DataFrame(evsL)
@@ -125,18 +142,18 @@ if __name__ == '__main__':
         ti.join()
 
         sensor = cam
-        imageL = imgL.fusion   #imgL.fusion  # Fusion: imgL.E3CT + aps_left
-        imageR = imgR.fusion  #imgR.fusion  # Fusion: imgR.E3CT + aps_right
+        imageL = aps_left  # imgL.fusion   #imgL.fusion  # Fusion: imgL.E3CT + aps_left
+        imageR = aps_right  #imgR.fusion  #imgR.fusion  # Fusion: imgR.E3CT + aps_right
 
         # print('Fuse', time.time() - ts1)
         # ts2 = time.time()
 
-        cv2.imshow('E3CT_rect Frame',
-                   cv2.resize(cv2.hconcat((imgL.fusion.astype(np.uint8), imgR.fusion.astype(np.uint8))), (aps_left.shape[1], int(aps_left.shape[0]/2))))
+        #cv2.imshow('E3CT_rect Frame',
+        #           cv2.resize(cv2.hconcat((imgL.fusion.astype(np.uint8), imgR.fusion.astype(np.uint8))), (aps_left.shape[1], int(aps_left.shape[0]/2))))
         #cv2.imshow('E3CT Frame',
         #           cv2.resize(cv2.hconcat((imgL.E3CT.astype(np.uint8), imgR.E3CT.astype(np.uint8))), (w, int(h/2))))
-        cv2.waitKey(5)
-        continue
+        #cv2.waitKey(5)
+        #continue
 
         featurel = ImageFeature(imageL, params)  # Select: imgL.E3CT or aps_left
         featurer = ImageFeature(imageR, params)  # Select: imgR.E3CT or aps_right

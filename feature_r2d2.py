@@ -45,7 +45,8 @@ norm_RGB = tvf.Compose([tvf.ToTensor(), tvf.Normalize(mean=RGB_mean, std=RGB_std
 
 
 def load_network(model_fn):
-    checkpoint = torch.load(model_fn, map_location=torch.device('cuda'))
+    torch_device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    checkpoint = torch.load(model_fn, map_location=torch_device)
     print("\n>> Creating net = " + checkpoint['net']) 
     net = eval(checkpoint['net'])
     nb_of_weights = common.model_size(net)
@@ -160,14 +161,14 @@ def convert_pts_to_keypoints(pts, scores, sizes, levels):
 # interface for pySLAM
 class R2d2Feature2D: 
     def __init__(self,
-                 num_features = 2000,
-                 scale_f   = 2**0.25,
-                 min_size  = 256, 
-                 max_size  = 1300, #1024,                   
+                 num_features = 200000,
+                 scale_f   = 2**0.05,
+                 min_size  = 100,
+                 max_size  = 4000, #1024,
                  min_scale = 0, 
-                 max_scale = 1,                
-                 reliability_thr   = 0.7,   
-                 repeatability_thr = 0.7,  
+                 max_scale = 1,
+                 reliability_thr   = 0.7,
+                 repeatability_thr = 0.7,
                  do_cuda=torch.cuda.is_available()):
         print('Using R2d2Feature2D')    
         self.lock = RLock()             
